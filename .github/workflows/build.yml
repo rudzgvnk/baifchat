@@ -1,0 +1,49 @@
+name: Build BaifChat APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+      - 'BaifChat-source.zip'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Extract source code
+        run: |
+          unzip -o BaifChat-source.zip -d .
+          ls -la
+          test -f BaifChat/pubspec.yaml
+
+      - name: Install dependencies
+        working-directory: BaifChat
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: BaifChat
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BaifChat-APK
+          path: BaifChat/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
